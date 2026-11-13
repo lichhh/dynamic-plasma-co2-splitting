@@ -66,9 +66,10 @@ writes `schedule.csv`, `design.csv`, `costs.csv` and `metrics.csv` to
 `results/{market}/{case}/`. `results/` already holds the solutions reported in the
 paper, so `make_tables.py` and `replay_case4_2s.py` can be run without a solver.
 
-Solve times with 8 threads and a 1% relative optimality gap: hourly one-month models
-2–8 min (Cases 2–3) and 10–30 min (Case 4); hourly full-year models 20–60 min;
-15-min one-month models 30–90 min; 15-min full-year models more than 8 h.
+All models are solved to a 1% relative optimality gap with CPLEX default threading.
+Typical solve times on a desktop workstation: hourly one-month models 2–8 min
+(Cases 2–3) and 10–30 min (Case 4); hourly full-year models 20–60 min; 15-min
+one-month models 30–90 min; 15-min full-year models more than 8 h.
 
 ### Market keys
 
@@ -102,8 +103,9 @@ Solve times with 8 threads and a 1% relative optimality gap: hourly one-month mo
 
 `process_model/aspen/CO2_plasma_process.bkp` is the Aspen Plus flowsheet of
 Suppl. Fig. 17: plasma reactor, carbon bed, PSA, vacuum pump and recycle compressor.
-The flowsheet contains the sensitivity block used for the specific-electricity maps
-(21 currents from 2 to 10 A × 20 CO2 flows, 420 points per temperature).
+Its sensitivity block `S-1` varies the applied current (2–10 A, 21 points) and the
+CO2 feed per tube (about 500–3,000 mL/min, 21 points) and tabulates power and CO
+output; these runs give the specific-electricity maps of Fig. 4e and Suppl. Fig. 18.
 
 The plasma reactor is the Aspen Custom Modeler block in
 `process_model/aspen/CO2_Plasma.acm`. It computes single-pass conversion from the
