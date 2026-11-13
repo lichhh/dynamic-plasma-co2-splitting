@@ -1,0 +1,40 @@
+cff-version: 1.2.0
+message: "If you use this code, please cite the article below."
+title: "Dynamic plasma catalysis for grid-responsive CO2 splitting: models and optimization code"
+type: software
+license: MIT
+repository-code: "https://github.com/lichhh/dynamic-plasma-co2-splitting"
+authors:
+  - family-names: Zhang
+    given-names: Haonan
+  - family-names: Qi
+    given-names: Meng
+  - family-names: Xu
+    given-names: Tianshi
+  - family-names: Cai
+    given-names: Jun
+  - family-names: Wu
+    given-names: Mingbo
+  - family-names: Tsubaki
+    given-names: Noritatsu
+  - family-names: Wu
+    given-names: Wenting
+preferred-citation:
+  type: article
+  title: "Dynamic plasma catalysis for grid-responsive CO2 splitting enabled by coordinatively unsaturated Mn sites"
+  authors:
+    - family-names: Zhang
+      given-names: Haonan
+    - family-names: Qi
+      given-names: Meng
+    - family-names: Xu
+      given-names: Tianshi
+    - family-names: Cai
+      given-names: Jun
+    - family-names: Wu
+      given-names: Mingbo
+    - family-names: Tsubaki
+      given-names: Noritatsu
+    - family-names: Wu
+      given-names: Wenting
+  status: submitted

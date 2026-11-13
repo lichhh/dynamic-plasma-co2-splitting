@@ -1,0 +1,92 @@
+Model CO2_Plasma
+
+// Modeling of a CO2 conversion reactor, 2025-6-8
+//--------------------------------------------------------------------------------------------------------------------------------------------------------
+// PORTS
+Rea_in                                         as input Materialport;
+Rea_out                                        as output Materialport;
+Heat_out                                       as output Heatport;
+
+// Variables
+In_T                                           as temperature     (description:"inlet temperature, C");
+Out_T                                          as temperature     (description:"outlet temperature, C", 20, FIXED);
+In_P                                           as pressure        (description:"reaction pressure, bar"); 
+
+current                                        as notype          (description:"applied current, A", 2, FIXED); 
+voltage                                        as notype          (description:"voltage, V", 30, FIXED); 
+
+CO2_conv                                       as notype          (description:"CO2 conversion rate, %"); 
+flow_con                                       as notype          (description:"flow unit conversion, (ml/min)/(kmol/h)", 398567.6698, FIXED); 
+Vol_flow                                       as notype          (description:"flow rate in volume, (ml/min)"); 
+
+// Stream variables
+In_rate(componentlist)                         as flow_mol        (description:"inlet component flow rate");
+Out_rate(componentlist)                        as flow_mol        (description:"outlet component flow rate"); 
+
+In_enth_mol                                    as enth_mol_vap    (description:"inlet enthalpy"); 
+Out_enth_mol                                   as enth_mol_vap    (description:"outlet enthalpy");
+In_enth                                        as enthflow        (description:"total inlet enthalpy"); 
+Out_enth                                       as enthflow        (description:"total outlet enthalpy"); 
+
+Work                                           as enthflow        (description:"total power applied"); 
+Eloss                                          as enthflow        (description:"energy loss"); 
+
+Vapfrac                                        as vapfraction     (description:"vapour fraction after flashing");
+Molfracvap(ComponentList)                      as molefraction    (description:"mole fraction of components in the valpur phase after flashing");
+Molfracliq(ComponentList)                      as molefraction    (description:"mole fraction of components in the liquid phase after flashing");
+Moldensvap                                     as dens_mol_vap    (description:"molar density of vap fraction after flashing");
+Moldensliq                                     as dens_mol_liq    (description:"molar density of liquid fraction after flashing");
+Enthliqfrac                                    as enth_mol_liq    (description:"molar ethalpy liquid");
+Enthvapfrac                                    as enth_mol_vap    (description:"molar ethalpy vapor"); 
+
+//MASS BALANCE--------------------------------------------------------------------------------------------------------------------------------------------
+
+// calculate flowrates
+In_rate = Rea_in.F * Rea_in.z; 
+Vol_flow = In_rate("CO2") * flow_con;
+
+ // calculate CO2 conversion rate (ALAMO surrogate, Supplementary Note 1)
+ // Active: 20 C model. For the 5 C and 80 C flowsheet runs, replace the active
+ // expression with the corresponding one below and set Out_T accordingly.
+ // 20 C
+CO2_conv =  - 0.0873528150008443 * Vol_flow - 174.612517924554 * LOGE(Vol_flow) + 15.7458358929333 * Vol_flow^0.5 + 1.40626942574087 * current^2 - 0.0796066014820672 * current^3 - 0.00178828607559064 * current*Vol_flow - 1832.3913605269 * current/Vol_flow + 805.092190150748;
+
+// 80 C:
+//- 56.2353113690814 * LOGE(current) - 12.53144496654 * LOGE(Vol_flow) - 1.34101117564184E-06 * Vol_flow^2 + 2.04178020853152 * (current*Vol_flow)^0.5 - 0.00718991384933179 * current*Vol_flow + 4.44180524096855E-08 * (current*Vol_flow)^2 + 1469.62760470153 * (current/Vol_flow)^0.5 - 4097.80320955799 * current/Vol_flow; 
+
+// 5 C:
+//- 0.0918787122961595 * Vol_flow - 168.927084150599 * LOGE(Vol_flow) + 15.8950257826925 * Vol_flow^0.5 + 0.69480500724112 * current^2 - 0.00273473305074747 * current^4 - 0.00124325568436682 * current*Vol_flow - 63998.1695561865 * (current/Vol_flow)^2 + 762.262705654992;
+
+ // calculate flow rates of all components
+Out_rate("CO2") = In_rate("CO2") * (1-CO2_conv/100) ; 
+Out_rate("CO") = In_rate("CO") + In_rate("CO2") * (CO2_conv/100);
+Out_rate("O2") = In_rate("O2") + 0.5 * In_rate("CO2") * (CO2_conv/100); 
+
+for i in componentlist - ["CO2", "O2", "CO"] do
+Out_rate(i) = In_rate(i);
+endfor  
+
+
+// specify outlet conditions
+In_P = Rea_in.P;
+Rea_out.F = sigma(Out_rate);
+Rea_out.z = Out_rate / Rea_out.F;
+Rea_out.T = Out_T;
+Rea_out.P = In_P;
+
+Heat_out.Q = Eloss;
+
+//ENTHALPY BALANCE------------------------------------------------------------------------------------------------------------------------------------------
+
+// call functions to calculate inlet and outlet v/l fractions and enthalpies
+Call (Molfracvap, Molfracliq, Vapfrac, Enthvapfrac, Enthliqfrac) = pFlash(Out_T, In_P, Rea_out.z) ComponentList;  
+call(In_enth_mol) = pEnth_Mol_Vap(Rea_in.T, Rea_in.P, Rea_in.z)ComponentList;
+
+Rea_out.h  =  Vapfrac * Enthvapfrac + (1-Vapfrac) * Enthliqfrac;
+In_enth  = Rea_in.F * In_enth_mol ; 
+Out_enth = Rea_out.F * Rea_out.h ;
+
+// energy balance equation
+Work = current * voltage / 1000;
+0 = (In_enth-Out_enth) * (10)^6 + Work * 3600 - Eloss;
+End
